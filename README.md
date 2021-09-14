@@ -1,2 +1,2 @@
-# fungalgenomes.org
+# The Hyphal Tip
 FungalGenomes / Hyphaltip blog
