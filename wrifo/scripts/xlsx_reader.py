@@ -106,7 +106,12 @@ def read_sheet(z, path, ss, dstyles):
     width = max((len(r) for r in rows), default=0)
     return [r + [''] * (width - len(r)) for r in rows]
 
+EMAIL = re.compile(r'[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}')
+
+
 def main(src, outdir):
+    """Dump every sheet to CSV. Email addresses are redacted: this path exists
+    to write the archive under wrifo/sources/, which is committed publicly."""
     os.makedirs(outdir, exist_ok=True)
     z = zipfile.ZipFile(src)
     ss = shared_strings(z)
@@ -115,6 +120,7 @@ def main(src, outdir):
         rows = read_sheet(z, path, ss, dstyles)
         slug = re.sub(r'[^a-z0-9]+', '-', name.lower()).strip('-')
         dest = os.path.join(outdir, slug + '.csv')
+        rows = [[EMAIL.sub('[email redacted]', c) for c in r] for r in rows]
         with open(dest, 'w', newline='', encoding='utf-8') as fh:
             csv.writer(fh).writerows(rows)
         print(f'{name:28s} -> {dest}  ({len(rows)} rows x {len(rows[0]) if rows else 0} cols)')

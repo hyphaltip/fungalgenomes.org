@@ -62,22 +62,17 @@ NOT_A_COUNTRY = {'NIOO-KNAW': 'NL', 'BIOTEC': None, 'CSIR- IICB': 'IN'}
 REGIONS = ['Africa', 'Asia', 'Australia/NZ', 'Europe',
            'North America', 'South America']
 
-# The region a country code implies, used only to flag disagreements in
-# data_issues.csv -- never to overwrite what the workbook says. IL sits under
-# Europe because that is the convention the workbook has always used.
-COUNTRY_REGION = {
-    'ZA': 'Africa',
-    'CN': 'Asia', 'TW': 'Asia', 'IN': 'Asia', 'TH': 'Asia',
-    'AU': 'Australia/NZ', 'NZ': 'Australia/NZ',
-    'GB': 'Europe', 'FR': 'Europe', 'DE': 'Europe', 'ES': 'Europe',
-    'IT': 'Europe', 'NL': 'Europe', 'SE': 'Europe', 'NO': 'Europe',
-    'DK': 'Europe', 'FI': 'Europe', 'AT': 'Europe', 'CH': 'Europe',
-    'BE': 'Europe', 'PT': 'Europe', 'PL': 'Europe', 'SI': 'Europe',
-    'EE': 'Europe', 'IE': 'Europe', 'IL': 'Europe',
-    'US': 'North America', 'CA': 'North America', 'MX': 'North America',
-    'PR': 'North America', 'CR': 'North America',
-    'BR': 'South America', 'CO': 'South America',
-}
+# Which list a person belongs on follows from their career stage, so `roster`
+# is derived rather than carried: a correction that changes the stage moves the
+# person, and one that says nothing about it leaves them where they were.
+POSTDOC_STAGES = ('PhD', 'Postdoc')
+
+
+def roster_for(career_stage, default='faculty'):
+    if career_stage in POSTDOC_STAGES:
+        return 'postdoc'
+    return 'faculty' if career_stage else default
+
 
 CAREER_STAGES = OrderedDict([
     ('PhD',          'Doctoral researcher'),
@@ -194,9 +189,6 @@ def site_key(url):
                   url.translate(INVISIBLE).strip()).rstrip('/').lower()
 
 
-def same_site(a, b):
-    return site_key(a) == site_key(b)
-
 # --- reading and writing the tables ------------------------------------------
 
 def yaml_str(value):
@@ -226,6 +218,22 @@ def read_people():
 def write_people(people):
     people.sort(key=lambda p: (p.get('sort_name', ''), p.get('institution', '')))
     return write_table(PEOPLE_CSV, PEOPLE_FIELDS, people)
+
+
+def allocate_id(name, taken):
+    """A slug for `name`, suffixed if some *other* person already holds it.
+
+    Namesakes at different institutions are real in this data, so the id is
+    what distinguishes them; both the seed and the form ingest must number them
+    the same way or the second one silently overwrites the first.
+    """
+    base = slugify(name) or 'person'
+    if base not in taken:
+        return base
+    n = 2
+    while '%s-%d' % (base, n) in taken:
+        n += 1
+    return '%s-%d' % (base, n)
 
 
 def blank_person(**kw):
@@ -305,6 +313,10 @@ def refresh_derived(people=None, resources=None, unsorted=None, issues=None):
     stage_counts = Counter(p['career_stage'] for p in people if p.get('career_stage'))
     stages = [{'stage': k, 'description': d, 'n_people': stage_counts[k]}
               for k, d in CAREER_STAGES.items()]
+    # As with areas and regions: a stage that slipped through curation stays
+    # visible in the facets rather than dropping out of the counts silently.
+    stages += [{'stage': s, 'description': '', 'n_people': stage_counts[s]}
+               for s in sorted(set(stage_counts) - set(CAREER_STAGES))]
     write_table(os.path.join(DATA, 'career_stages.csv'),
                 ['stage', 'description', 'n_people'], stages)
 

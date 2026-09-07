@@ -4,7 +4,7 @@ lede: Three ways in, depending on how you like to work. All of them end up in th
 permalink: /wrifo/contribute/
 ---
 
-{% assign form = site.data.wrifo.form_url | default: site.wrifo.form_url %}
+{% assign form = site.wrifo.form_url %}
 {% assign repo = site.wrifo.repo %}
 
 Anyone may add anyone — you do not have to be adding yourself, and you do not

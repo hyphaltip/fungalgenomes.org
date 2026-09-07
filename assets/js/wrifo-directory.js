@@ -141,7 +141,8 @@
     // Emeritus above Junior. Rank it instead, and sort on the rank.
     people.forEach(function (p) {
       var r = order.indexOf(p.career_stage);
-      p.stage_rank = p.career_stage ? String(r < 0 ? order.length : r) : '';
+      // Zero-padded so the string comparator below still orders it numerically.
+      p.stage_rank = p.career_stage ? ('0' + (r < 0 ? order.length : r)).slice(-2) : '';
     });
 
     var sortKey = 'sort_name', sortDir = 1;

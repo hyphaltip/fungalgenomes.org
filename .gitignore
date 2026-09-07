@@ -8,3 +8,14 @@ vendor/
 
 # python bytecode from wrifo/scripts
 __pycache__/
+
+# WRIFO form review queue: transient, and holds submissions nobody has read yet.
+# wrifo/data/ingest_log.csv IS tracked -- it is what makes the fetch idempotent.
+wrifo/data/incoming.csv
+
+# The two upstream source files. Both carry personal email addresses -- the
+# workbook in its threaded comments, the Airtable export in a website cell -- so
+# they stay out of a public repository. wrifo/sources/ holds redacted copies of
+# everything in them, and is what the seed can be re-run from.
+wrifo/WRiFO.xlsx
+wrifo/airtable_dump.txt

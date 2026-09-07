@@ -59,7 +59,7 @@ cite, or load into R, Python, or a spreadsheet:
 - [unsorted.csv]({{ '/wrifo/data/unsorted.csv' | relative_url }}) — {{ site.data.wrifo.counts.unsorted }} suggested names not yet worked up into full entries
 - [data_issues.csv]({{ '/wrifo/data/data_issues.csv' | relative_url }}) — rows the import flagged for a human to look at
 
-The [schema is documented here](https://github.com/hyphaltip/fungalgenomes.org/blob/main/wrifo/data/README.md).
+The [schema is documented here](https://github.com/{{ site.wrifo.repo }}/blob/main/wrifo/data/README.md).
 These tables are deliberately boring and portable: when the roster outgrows this
 site it can move to a repository of its own without any of them changing shape.
 

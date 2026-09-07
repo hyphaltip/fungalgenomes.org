@@ -44,9 +44,13 @@ deliberately not carried over.
 ## `unsorted.csv`
 
 Names suggested for the directory that only have `name`, `institution` and a
-`notes` fragment. `source` records which sheet they were pasted into. These are
-a worklist, not part of the directory — each needs a region, research areas and
-a lab link before it becomes a row in `people.csv`.
+`notes` fragment. `source` records where the suggestion came from — a sheet of
+the workbook, or a dated comment thread in it. These are a worklist, not part
+of the directory: each needs a region, research areas and a lab link before it
+becomes a row in `people.csv`.
+
+Like `people.csv`, this file is now hand-maintained. A full re-seed rebuilds it
+from the workbook and would drop anything added since.
 
 ## `incoming.csv` and `ingest_log.csv`
 
@@ -175,3 +179,4 @@ so a re-seed does not reintroduce errors that were already fixed.
 | `scripts/ingest_form.py` | the ongoing pipeline: form responses in, curated people out. |
 | `scripts/build_data.py` | the one-time seed. Retired; run only to rebuild from scratch. |
 | `scripts/xlsx_reader.py` | minimal `.xlsx` reader, standard library only. |
+| `scripts/extract_comments.py` | archives the workbook's threaded comments to `sources/workbook-comments.csv` and flags requests whose person never made it into the directory. |

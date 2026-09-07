@@ -7,7 +7,7 @@ counts:
   institutions: 293
   regions: 6
   resources: 2
-  unsorted: 39
+  unsorted: 46
   issues: 38
 research_areas:
   - area: "Biochemistry"
@@ -85,9 +85,15 @@ unsorted:
   - name: "Barbara Alexander"
     institution: "Duke"
     notes: "America, Diagnostics, Clinical mycology"
+  - name: "Corbett, Anita"
+    institution: "Emory University"
+    notes: "http://www.biology.emory.edu/index.cfm?faculty=444"
   - name: "Dora Corzo-Leon"
     institution: "Exeter"
     notes: "Mucorales + clin mycology"
+  - name: "Dudley, Aimee"
+    institution: "Pacific Northwest Research Institute"
+    notes: "https://www.pnri.org/research-programs/dudley-lab/"
   - name: "Elitza Theel"
     institution: "Mayo"
     notes: "diagnostics (serology)"
@@ -100,6 +106,9 @@ unsorted:
   - name: "Fariba Donovan"
     institution: "U Arizona"
     notes: "Coccidioides"
+  - name: "Friedman, Katherine"
+    institution: "Vanderbilt University"
+    notes: "https://my.vanderbilt.edu/thefriedmanlab/"
   - name: "Hong Nguyễn"
     institution: "UPMC"
     notes: "diagnostics"
@@ -142,6 +151,9 @@ unsorted:
   - name: "Libby Dodds-Ashley"
     institution: "Duke"
     notes: "therapeutics / antifungals"
+  - name: "Lockhart, Deborah"
+    institution: "University of Aberdeen (UK)"
+    notes: "https://www.abdn.ac.uk/cmm/research/deborah-lockhart.php"
   - name: "Maiken Cavling Arendrup"
     institution: "Staten Serum Institute"
     notes: "AFST, diagnostics"
@@ -190,6 +202,15 @@ unsorted:
   - name: "Tihana Bicanic"
     institution: "St Georges"
     notes: "clin myc"
+  - name: "Tran, Elizabeth"
+    institution: "Purdue University"
+    notes: "http://www.tranlabrna.com/"
+  - name: "Warris, Adilia"
+    institution: "University of Aberdeen (UK)"
+    notes: "https://www.abdn.ac.uk/cmm/research/adilia-warris.php"
   - name: "Wendy van de Sande"
     institution: "Erasmus"
     notes: "Mycetoma"
+  - name: "Wittkopp, Patricia"
+    institution: "University of Michigan"
+    notes: "https://sites.lsa.umich.edu/wittkopp-lab/"

@@ -47,16 +47,19 @@ LOG_FIELDS = ['response_key', 'submitted_at', 'name', 'queued_at',
 
 # Form question -> people.csv column. Matched as a substring of the lowercased
 # header, so rewording a question does not break the import.
+# Order matters: the first needle found in the header wins, so anything that
+# could appear inside another question ('name' inside 'Institution name') has to
+# come after it.
 HEADER_MAP = [
-    ('timestamp',     'submitted_at'),
-    ('name',          'name'),
-    ('institution',   'institution'),
-    ('region',        'region'),
+    ('timestamp',       'submitted_at'),
+    ('institution',     'institution'),
     ('research area 1', 'research_area_1'),
     ('research area 2', 'research_area_2'),
-    ('keyword',       'keywords'),
-    ('website',       'website'),
-    ('career',        'career_stage'),
+    ('career',          'career_stage'),
+    ('website',         'website'),
+    ('keyword',         'keywords'),
+    ('region',          'region'),
+    ('name',            'name'),
 ]
 # Never copied out of the sheet. The form collects an address so you can reach
 # the submitter; the directory is public and does not publish contact details.
@@ -169,21 +172,39 @@ def normalise(rec):
         website=website,
         website_2=website_2,
         career_stage=stage,
-        # A submission's own career stage decides which list it belongs on.
-        roster='postdoc' if stage in ('Postdoc', 'PhD') else 'faculty',
+        roster=W.roster_for(stage),
         notes=leftover,
         source='form')
     return person
+
+
+def blocking_problems(person, prior):
+    """Problems that should hold a row back.
+
+    A third of the seeded directory is missing a website or a research area, so
+    validating an update against the whole record would refuse a good correction
+    over gaps the submitter never touched. Only what the submission introduces
+    or leaves unfixed counts against it.
+    """
+    problems = W.validate(person)
+    if prior is None:
+        return problems
+    already = set(W.validate(prior))
+    return [p for p in problems if p not in already]
 
 
 def merge_over(prior, incoming):
     """Overlay a submission on the record already held for that person."""
     merged = dict(prior)
     for field in W.PEOPLE_FIELDS:
-        if field in ('id', 'sort_name', 'source'):
+        # `roster` follows career stage below; copying it here would flip a
+        # listed postdoc to faculty whenever a correction omits the stage.
+        if field in ('id', 'sort_name', 'source', 'roster'):
             continue
         if incoming.get(field):
             merged[field] = incoming[field]
+    merged['roster'] = W.roster_for(merged['career_stage'],
+                                    prior.get('roster', 'faculty'))
     # Keywords accumulate; dropping one is a deliberate edit to the queue file.
     merged['keywords'] = W.norm_keywords(
         '; '.join(x for x in (prior.get('keywords'), incoming.get('keywords')) if x))
@@ -210,7 +231,12 @@ def queue_new(responses):
         row = dict(person)
         row['submitted_at'] = rec.get('submitted_at', '')
         row['action'] = 'update' if prior is not None else 'add'
-        row['problems'] = '; '.join(W.validate(person))
+        row['problems'] = '; '.join(blocking_problems(person, prior))
+        if prior is not None:
+            row['problems'] = '; '.join(filter(None, [
+                row['problems'],
+                'matches %s at %s -- set action=add if this is a different '
+                'person' % (prior['id'], prior['institution'] or 'no institution')]))
         row['response_key'] = key
         queue.append(row)
         log[key] = {'response_key': key, 'submitted_at': row['submitted_at'],
@@ -250,20 +276,29 @@ def promote(force=False):
     kept, added, updated = [], 0, 0
     for row in queue:
         person = W.blank_person(**{k: row.get(k, '') for k in W.PEOPLE_FIELDS})
-        # A curator may have edited the name, so the id follows it.
-        person['id'] = W.slugify(person['name'])
         person['sort_name'] = W.sort_key(person['name'])
         person['website'] = W.clean_url(person['website'])
         person['keywords'] = W.norm_keywords(person['keywords'])
+        person['roster'] = W.roster_for(person['career_stage'],
+                                        person['roster'] or 'faculty')
 
-        problems = W.validate(person)
+        # An update keeps the id of the record it is updating, even if the
+        # curator corrected the name. An addition gets a fresh id, numbered past
+        # any namesake already listed -- recomputing the slug blindly would let
+        # a new person overwrite someone who merely shares a name.
+        if row.get('action') == 'update' and person['id'] in by_id:
+            prior = by_id[person['id']]
+        else:
+            prior = None
+            person['id'] = W.allocate_id(person['name'], set(by_id))
+
+        problems = blocking_problems(person, prior)
         if problems and not force:
             row['problems'] = '; '.join(problems)
             kept.append(row)
             continue
         entry = log.get(row.get('response_key'))
 
-        prior = by_id.get(person['id'])
         if prior is None:
             person['source'] = person['source'] or 'form'
             people.append(person)

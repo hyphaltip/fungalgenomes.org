@@ -20,9 +20,8 @@ from collections import Counter
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import wrifo_data as W
 from wrifo_data import (AREA_FIXES, CAREER_STAGES, COUNTRY_ALIASES, DATA,
-                        REGIONS, ROOT, clean_url, norm_keywords, site_key,
-                        slugify, sort_key, split_country, split_urls,
-                        URL_RE)
+                        REGIONS, ROOT, URL_RE, clean_url, norm_keywords,
+                        site_key, slugify, sort_key, split_country, split_urls)
 from xlsx_reader import read_sheet, shared_strings, date_styles, sheet_map
 
 # Sheet name -> the file in sources/ holding its verbatim dump.
@@ -308,35 +307,6 @@ def merge_airtable(people, path):
           % (added, len(missing)))
     return people
 
-
-def build_unsorted(sheets, extra):
-    rows = list(extra)
-    for row in sheets['To sort'][0:]:
-        if not row or not row[0].strip():
-            continue
-        name, inst, notes = parse_unstructured(row[0])
-        rows.append({'name': name, 'institution': inst, 'notes': notes,
-                     'source': 'To sort'})
-    rows.sort(key=lambda r: sort_key(r['name']))
-    return rows
-
-
-def build_resources(sheets):
-    out = []
-    for row in sheets['Published resources'][1:]:
-        row = row + [''] * (4 - len(row))
-        if not row[0].strip():
-            continue
-        link = row[2].strip()
-        m = re.search(r'(10\.\d{4,9}/\S+)', link)
-        doi = m.group(1).rstrip('.') if m else ''
-        url = ('https://doi.org/' + doi) if doi else clean_url(link)
-        out.append({'title': ' '.join(row[0].split()),
-                    # Author strings carry affiliation footnote markers.
-                    'authors': clean_authors(row[1]),
-                    'doi': doi,
-                    'url': url})
-    return out
 
 def build_unsorted(sheets, extra):
     rows = list(extra)

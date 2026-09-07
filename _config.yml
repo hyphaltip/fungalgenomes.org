@@ -27,7 +27,7 @@ permalink: /notes/:year/:month/:title/
 # form's public "send" link here and the contribute page picks it up. Leave it
 # empty and that page falls back to the GitHub issue route only.
 wrifo:
-  form_url: ""
+  form_url: "https://forms.gle/H9mcg3rYqFNrE6Ee8"
   repo: hyphaltip/fungalgenomes.org
 
 plugins:
