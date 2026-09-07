@@ -1,0 +1,28 @@
+{%- assign n = site.nav | size -%}
+{%- assign half = n | minus: 1 | times: 78 | divided_by: 2 -%}
+<div class="hypha">
+  <svg class="hypha__draw" viewBox="0 0 760 300" aria-hidden="true" focusable="false">
+    <g class="hypha__fine">
+      <path pathLength="1" style="--i:4" d="M96,150 C118,150 122,127 141,119" />
+      <path pathLength="1" style="--i:5" d="M122,150 C142,150 146,173 166,183" />
+      <path pathLength="1" style="--i:6" d="M56,150 C72,150 74,139 88,134" />
+    </g>
+    <path class="hypha__trunk" pathLength="1" style="--i:0" d="M6,150 C70,150 118,150 170,150" />
+    {%- for item in site.nav -%}
+      {%- assign y = forloop.index0 | times: 78 | plus: 150 | minus: half -%}
+      <path class="hypha__branch" pathLength="1" style="--i:{{ forloop.index }}"
+            d="M170,150 C248,150 274,{{ y }} 430,{{ y }}" />
+      <circle class="hypha__apex" style="--i:{{ forloop.index }}" cx="430" cy="{{ y }}" r="5.5" />
+    {%- endfor -%}
+  </svg>
+  <ul class="hypha__tips">
+    {%- for item in site.nav -%}
+      {%- assign y = forloop.index0 | times: 78 | plus: 150 | minus: half -%}
+      {%- assign top = y | times: 100 | divided_by: 300.0 -%}
+      <li style="--top:{{ top }}%; --i:{{ forloop.index }}">
+        <a href="{{ item.url | relative_url }}">{{ item.title }}</a>
+        <span>{{ item.note }}</span>
+      </li>
+    {%- endfor -%}
+  </ul>
+</div>

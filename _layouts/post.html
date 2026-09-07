@@ -1,0 +1,19 @@
+---
+layout: default
+---
+<article class="page">
+  <header class="page__head">
+    <h1>{{ page.title }}</h1>
+    <p class="page__byline">
+      <time datetime="{{ page.date | date_to_xmlschema }}">{{ page.date | date: "%-d %B %Y" }}</time>
+      {% if page.author or site.author.name %}
+        <span>by {{ page.author | default: site.author.name }}</span>
+      {% endif %}
+    </p>
+  </header>
+  <div class="prose">{{ content }}</div>
+  <nav class="pager" aria-label="More notes">
+    {% if page.previous %}<a class="pager__prev" href="{{ page.previous.url | relative_url }}">{{ page.previous.title }}</a>{% endif %}
+    {% if page.next %}<a class="pager__next" href="{{ page.next.url | relative_url }}">{{ page.next.title }}</a>{% endif %}
+  </nav>
+</article>
