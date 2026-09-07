@@ -1,0 +1,39 @@
+table,id,field,problem
+faculty,"Mellado, Emilia",id,listed on two rows; merged
+postdoc,"Delmas, Chloé",research_area_2,free text moved to keywords: 'Ecology; Evolution; Epidemiology; Climate change; Grapevine pathogens; Trait evolution'
+postdoc,"Sánchez-Torres, Paloma",id,listed on two rows; merged
+postdoc,Postdocs!23,name,row has no name
+postdoc,Postdocs!24,name,row has no name
+people,"Boynton, Primrose",institution,"workbook says 'Wheaton College Massachusetts', Airtable says 'Max Planck Institute'"
+people,"Boynton, Primrose",country,"workbook says 'US', Airtable says 'DE'"
+people,"Boynton, Primrose",region,"workbook says 'North America', Airtable says 'Europe'"
+people,"Boynton, Primrose",website,"workbook has https://departments.wheatoncollege.edu/faculty/boynton-primrose/, Airtable has http://web.evolbio.mpg.de/envgen/max-planck-institute-plon/primrose-j-boynton.html"
+people,"Chadha, Sonia",research_area_1,"workbook says 'Plant Pathology', Airtable says 'Genetics/Genomics'"
+people,"Chadha, Sonia",research_area_2,"workbook says 'Biotechnology', Airtable says 'Plant Pathology'"
+people,"Chaudhary, Bala",institution,"workbook says 'Dartmouth University', Airtable says 'DePaul University'"
+people,"de Bekker, Charissa",institution,"workbook says 'Utrecht University', Airtable says 'Univ of Central Florida'"
+people,"de Bekker, Charissa",region,"workbook says 'Europe', Airtable says 'North America'"
+people,"Dutton, Rachel",institution,"workbook says 'Univ California, San Diego', Airtable says 'UCSD / Arcadia Science'"
+people,"Gerstein, Aleeza",research_area_1,"workbook says 'Evolution', Airtable says 'Genetics/Genomics'"
+people,"Hadziabdic Guerry, Denita",career_stage,"workbook says 'Intermediate', Airtable says 'Junior'"
+people,"Riquelme, Meritxell",career_stage,"workbook says 'Senior', Airtable says 'Intermediate'"
+people,"van Munster, Jolanda",institution,"workbook says 'SRUC', Airtable says 'University of Manchester'"
+people,"van Munster, Jolanda",website,"workbook has https://pure.sruc.ac.uk/en/persons/jolanda-van-munster, Airtable has https://www.research.manchester.ac.uk/portal/jolanda.vanmunster.html"
+people,"Alexander, Barbara",source,in the workbook but not in Airtable
+people,"Beattie, Sarah",source,in the workbook but not in Airtable
+people,"Christensen, Jenna",source,in the workbook but not in Airtable
+people,"Elya, Carolyn",source,in the workbook but not in Airtable
+people,"Esher Righi, Shannon",source,in the workbook but not in Airtable
+people,"Fisher, Monika",source,in the workbook but not in Airtable
+people,"Gusa, Asiya",source,in the workbook but not in Airtable
+people,"Hilbert, Zoë",source,in the workbook but not in Airtable
+people,"Janevska, Slavica",source,in the workbook but not in Airtable
+people,"Kelliher, Tina",source,in the workbook but not in Airtable
+people,"Lofgren, Lotus",source,in the workbook but not in Airtable
+people,"McDonald, Megan",source,in the workbook but not in Airtable
+people,"Ost, Kyla",source,in the workbook but not in Airtable
+people,"Reynolds, Nicole",source,in the workbook but not in Airtable
+people,"Rhodes, Johanna",source,in the workbook but not in Airtable
+people,"Richardson, Riina",source,in the workbook but not in Airtable
+people,"Usher, Jane",source,in the workbook but not in Airtable
+people,"Zhai, Bing",source,in the workbook but not in Airtable

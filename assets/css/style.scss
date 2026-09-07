@@ -427,3 +427,141 @@ main > .page {
   .hypha__apex { transform: none; }
   * { transition-duration: 0.01ms !important; }
 }
+
+/* ---------- WRIFO directory ----------
+   A wide, filterable table that has to stay usable at 380px, so below the
+   breakpoint each row reflows into a stacked card. */
+
+.directory { max-width: none; margin-top: 2rem; }
+
+.directory__filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.9rem 1.25rem;
+  padding: 1.1rem 1.25rem;
+  background: var(--agar-sunk);
+  border-radius: 4px;
+  font-family: var(--face-ui);
+}
+
+.directory__field { display: flex; flex-direction: column; gap: 0.3rem; }
+.directory__field label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+}
+.directory__field input,
+.directory__field select {
+  font: 400 0.9375rem var(--face-ui);
+  color: var(--ink);
+  background: var(--agar);
+  border: 1px solid var(--rule);
+  border-radius: 3px;
+  padding: 0.42rem 0.55rem;
+  min-width: 11rem;
+}
+.directory__field input { min-width: 15rem; }
+.directory__search { flex: 1 1 15rem; }
+
+.directory__reset {
+  font: 500 0.875rem var(--face-ui);
+  color: var(--cotton);
+  background: none;
+  border: 0;
+  padding: 0.42rem 0;
+  cursor: pointer;
+  text-decoration: underline;
+  text-underline-offset: 0.18em;
+}
+
+.directory__count {
+  margin: 1rem 0 0.4rem;
+  font-family: var(--face-ui);
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.directory__scroll { overflow-x: auto; }
+
+.directory table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--face-ui);
+  font-size: 0.9375rem;
+  font-variant-numeric: normal;
+}
+.directory th, .directory td {
+  text-align: left;
+  vertical-align: top;
+  padding: 0.6rem 0.9rem 0.6rem 0;
+  border-bottom: 1px solid var(--rule);
+}
+.directory thead th {
+  position: sticky;
+  top: 0;
+  background: var(--agar);
+  font-weight: 600;
+  font-size: 0.8125rem;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.directory thead th button {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+}
+.directory thead th button:hover { color: var(--cotton); }
+.directory thead th[aria-sort] button { color: var(--ink); }
+.directory thead th[aria-sort="ascending"] button::after  { content: " \2191"; }
+.directory thead th[aria-sort="descending"] button::after { content: " \2193"; }
+
+.directory tbody tr:hover { background: var(--agar-sunk); }
+.directory__name { font-weight: 600; }
+.directory__kw { color: var(--ink-soft); font-size: 0.875rem; }
+.directory__empty { padding: 2rem 0; color: var(--ink-soft); }
+
+.tag {
+  display: inline-block;
+  margin: 0 0.3rem 0.2rem 0;
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+.stats { display: flex; flex-wrap: wrap; gap: 1.75rem 2.5rem; margin: 1.5rem 0 2rem; }
+.stats div { font-family: var(--face-ui); }
+.stats dt { font-size: 0.8125rem; letter-spacing: 0.04em; text-transform: uppercase; color: var(--ink-soft); }
+.stats dd { margin: 0.15rem 0 0; font-size: 2rem; font-weight: 600; letter-spacing: -0.02em; }
+
+@media (max-width: 52rem) {
+  .directory thead { position: absolute; left: -9999px; }
+  .directory tr {
+    display: block;
+    padding: 0.9rem 0;
+    border-bottom: 1px solid var(--rule);
+  }
+  .directory td {
+    display: block;
+    border: 0;
+    padding: 0.1rem 0;
+  }
+  .directory td[data-label]::before {
+    content: attr(data-label) ": ";
+    font-size: 0.75rem;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  .directory td:empty { display: none; }
+}
