@@ -18,8 +18,10 @@ institutional page backs up the entry.
 [**Open the submission form →**]({{ form }})
 
 It takes about a minute and asks for the same fields the directory stores. Use
-it for a new person or for a correction to an existing one — say which in the
-notes.
+it for a new person or for a correction to an existing one — a submission
+under a name already listed is treated as an update.
+
+Submissions are reviewed before they appear. Expect a few days.
 {% else %}
 A Google Form for additions and corrections is being set up. Until the link is
 live here, use one of the routes below.
@@ -62,6 +64,14 @@ The research area vocabulary is fixed so the filters stay useful:
 
 Anything that does not fit belongs in `keywords`, not in a new area. If a whole
 subfield is genuinely missing, open an issue and make the case.
+
+## What happens next
+
+Submissions go into a review queue, not straight onto the page. A maintainer
+checks that the institution and lab link resolve and that the research areas
+come from the vocabulary above, then merges the entry. Rows with a region or
+career stage outside the vocabulary, or a social-media link in place of a lab
+page, are held back until someone fixes them.
 
 ## Removal
 

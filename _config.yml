@@ -44,6 +44,8 @@ sass:
 exclude:
   - wrifo/scripts          # build tooling, not site content
   - wrifo/sources          # verbatim upstream dumps, superseded by wrifo/data
+  - wrifo/data/incoming.csv    # form submissions awaiting curation
+  - wrifo/data/ingest_log.csv  # who submitted what, and when
   - wrifo/WRiFO.xlsx       # source workbook; carries threaded comments
   - wrifo/airtable_dump.txt
   - Gemfile

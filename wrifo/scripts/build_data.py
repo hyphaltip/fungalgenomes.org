@@ -1,58 +1,44 @@
 #!/usr/bin/env python3
-"""Stage the WRiFO roster into the flat CSV tables under wrifo/data/.
+"""One-time seed of data/people.csv from the original workbook and Airtable.
 
     python3 scripts/build_data.py WRiFO.xlsx [airtable_dump.txt]
+    python3 scripts/build_data.py --from-sources   # the dumps in sources/
 
-The workbook is the base. A tab-separated Airtable export, if given, is merged
-over it: the two sources agree on almost every row, so the merge fills gaps
+**This script overwrites data/people.csv.** It exists to reconstruct the
+directory from the upstream sources it was first assembled from, and it knows
+nothing about anything added since. `data/people.csv` is now the source of
+truth; new people arrive through scripts/ingest_form.py. Do not run this to
+"refresh" the data -- it will discard every form submission.
+
+The two upstream sources agree on almost every row, so the merge fills gaps
 rather than replacing anything, and every real disagreement is written to
 data_issues.csv for a human to settle.
-
-Reads nothing but the standard library so it runs anywhere, including CI.
-Everything under data/ is generated -- edit the source workbook (or, once the
-roster moves to its own repository, edit people.csv directly and drop this
-script) rather than hand-patching the output.
 """
-import csv, os, re, sys, unicodedata
-from collections import Counter, OrderedDict
+import argparse, csv, os, re, sys, zipfile
+from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import wrifo_data as W
+from wrifo_data import (AREA_FIXES, CAREER_STAGES, COUNTRY_ALIASES, DATA,
+                        REGIONS, ROOT, clean_url, norm_keywords, site_key,
+                        slugify, sort_key, split_country, split_urls,
+                        URL_RE)
 from xlsx_reader import read_sheet, shared_strings, date_styles, sheet_map
-import zipfile
 
-HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-DATA = os.path.join(ROOT, 'data')
-# Summary counts are also emitted as Jekyll site data so the overview page can
-# render them without JavaScript. The CSVs under data/ stay the source of truth.
-SITE_DATA = os.path.join(os.path.dirname(ROOT), '_data', 'wrifo.yml')
-
-# --- controlled vocabularies -------------------------------------------------
-
-# Trailing "(XX)" codes seen in the Institution column, mapped to ISO 3166-1
-# alpha-2. The workbook was filled in by hand over several years, so the same
-# country turns up under several spellings.
-COUNTRY_ALIASES = {
-    'US': 'US', 'USA': 'US', 'UK': 'GB', 'GB': 'GB',
-    'AU': 'AU', 'AUS': 'AU', 'NZ': 'NZ',
-    'CA': 'CA', 'CANADA': 'CA', 'BC': 'CA',
-    'MX': 'MX', 'MEX': 'MX',
-    'ZA': 'ZA', 'RSA': 'ZA',
-    'CO': 'CO', 'COL': 'CO',
-    'DE': 'DE', 'GE': 'DE',          # "(GE)" is used for Germany, not Georgia
-    'ES': 'ES', 'USAL': 'ES',        # Universidad de Salamanca's own acronym
-    'IL': 'IL', 'IS': 'IL',          # "(IS)" is Israel here, not Iceland
-    'TH': 'TH', 'THAILAND': 'TH',
-    'FR': 'FR', 'IT': 'IT', 'NL': 'NL', 'SE': 'SE', 'NO': 'NO', 'DK': 'DK',
-    'FI': 'FI', 'AT': 'AT', 'CH': 'CH', 'BE': 'BE', 'PT': 'PT', 'PL': 'PL',
-    'SI': 'SI', 'EE': 'EE', 'IE': 'IE', 'CN': 'CN', 'TW': 'TW', 'IN': 'IN',
-    'BR': 'BR', 'CR': 'CR', 'PR': 'PR',
+# Sheet name -> the file in sources/ holding its verbatim dump.
+SOURCE_FILES = {
+    'Faculty': 'sheet-faculty.csv',
+    'Postdocs': 'sheet-postdocs.csv',
+    'Published resources': 'sheet-published-resources.csv',
+    'Keywords': 'sheet-keywords.csv',
+    'To sort': 'sheet-to-sort.csv',
 }
-# Parentheticals that are institutional acronyms rather than country codes.
-NOT_A_COUNTRY = {'NIOO-KNAW': 'NL', 'BIOTEC': None, 'CSIR- IICB': 'IN'}
 
-REGIONS = ['Africa', 'Asia', 'Australia/NZ', 'Europe',
-           'North America', 'South America']
+# The Airtable base names the same career-stage scale differently. Its labels
+# are clearer, but the workbook's are the ones already published, so Airtable is
+# mapped onto them rather than the other way round.
+AIRTABLE_STAGES = {'Early': 'Junior', 'Mid': 'Intermediate',
+                   'Senior': 'Senior', 'Emeritus': 'Emeritus'}
 
 # The region a country code implies, used only to flag disagreements in
 # data_issues.csv -- never to overwrite what the workbook says. IL sits under
@@ -70,24 +56,6 @@ COUNTRY_REGION = {
     'PR': 'North America', 'CR': 'North America',
     'BR': 'South America', 'CO': 'South America',
 }
-
-CAREER_STAGES = OrderedDict([
-    ('PhD',          'Doctoral researcher'),
-    ('Postdoc',      'Postdoctoral researcher'),
-    ('Junior',       'Assistant professor or equivalent'),
-    ('Intermediate', 'Associate professor or equivalent'),
-    ('Senior',       'Full professor or equivalent'),
-    ('Emeritus',     'Emeritus'),
-])
-
-# Research areas whose spelling drifted from the Keywords sheet vocabulary.
-AREA_FIXES = {'Biochemistry/Genomics': 'Biochemistry'}
-
-# The Airtable base names the same career-stage scale differently. Its labels
-# are clearer, but the workbook's are the ones already published, so Airtable is
-# mapped onto them rather than the other way round.
-AIRTABLE_STAGES = {'Early': 'Junior', 'Mid': 'Intermediate',
-                   'Senior': 'Senior', 'Emeritus': 'Emeritus'}
 
 # Region values contradicted by the institution's own country code.
 REGION_FIXES = {
@@ -111,82 +79,6 @@ def note(table, row_id, field, problem):
 
 # --- helpers -----------------------------------------------------------------
 
-def slugify(text):
-    text = unicodedata.normalize('NFKD', text)
-    text = text.encode('ascii', 'ignore').decode('ascii').lower()
-    return re.sub(r'[^a-z0-9]+', '-', text).strip('-')
-
-
-def sort_key(name):
-    """Fold accents so 'Sanchez' and 'Sánchez' sort together."""
-    return unicodedata.normalize('NFKD', name).encode('ascii', 'ignore') \
-        .decode('ascii').lower().strip()
-
-
-INVISIBLE = dict.fromkeys(map(ord, '\u200b\u200c\u200d\u2060\ufeff'), None)
-
-
-def clean_url(url):
-    """Unwrap Outlook safelinks, drop stray trailing punctuation."""
-    # Some cells were pasted from rich text and carry zero-width spaces, which
-    # make two identical URLs compare unequal.
-    url = url.translate(INVISIBLE).strip().rstrip(';,. ')
-    m = re.search(r'safelinks\.protection\.outlook\.com/\?url=([^&]+)', url)
-    if m:
-        from urllib.parse import unquote
-        url = unquote(m.group(1))
-    if url and not re.match(r'^(https?|mailto):', url):
-        url = 'http://' + url
-    return url
-
-
-# A full URL, or a bare hostname like "doeringlab.com" that was typed without a
-# scheme. A bare name has to end in a known TLD or carry a path, so that prose
-# in the same cell ("E. coli", "etc.") is not mistaken for an address.
-TLDS = ('com|org|net|edu|gov|int|info|io|co|ac|eu|uk|de|fr|nl|se|es|it|ca|au|nz'
-        '|ch|at|dk|no|fi|be|pt|pl|cz|si|ee|ie|jp|cn|tw|in|br|mx|za|il|kr|ru|tr')
-URL_RE = re.compile(
-    r'(?:https?://|www\.)[^\s,;]+'
-    r'|(?<![\w@.])[a-z0-9][a-z0-9-]*(?:\.[a-z0-9-]+)*'
-    r'(?:\.(?:%s))(?![a-z])(?:/[^\s,;]*)?' % TLDS,
-    re.I)
-
-
-def split_urls(*fields):
-    """Several cells hold two lab URLs; return (primary, secondary, leftover)."""
-    urls, leftover = [], []
-    for field in fields:
-        field = field.translate(INVISIBLE).strip()
-        if not field:
-            continue
-        for m in URL_RE.findall(field):
-            u = clean_url(m)
-            if u and u not in urls:
-                urls.append(u)
-        rest = URL_RE.sub('', field).strip(' ,;')
-        if rest:
-            leftover.append(rest)
-    return (urls[0] if urls else '',
-            '; '.join(urls[1:]),
-            ' '.join(leftover))
-
-
-def split_country(institution):
-    """Pull a trailing country code out of the institution string."""
-    inst = institution.strip().rstrip(',')
-    m = re.search(r'\s*\(([^()]+)\)\s*$', inst)
-    if not m:
-        return inst, ''
-    token = m.group(1).strip()
-    key = token.upper()
-    if key in COUNTRY_ALIASES:
-        return inst[:m.start()].strip(), COUNTRY_ALIASES[key]
-    if token in NOT_A_COUNTRY:
-        # Acronym, not a country -- leave it on the institution name.
-        return inst, NOT_A_COUNTRY[token] or ''
-    return inst, ''
-
-
 def clean_authors(raw):
     """Strip the superscript affiliation markers that paste in as '1,2,*'."""
     out = []
@@ -197,19 +89,6 @@ def clean_authors(raw):
         if part and not re.fullmatch(r'[\d*]+', part):
             out.append(part)
     return ', '.join(out)
-
-
-def norm_keywords(raw):
-    """Keywords arrive semicolon- or comma-separated; emit semicolon-separated."""
-    parts = re.split(r'[;,]', raw)
-    seen, out = set(), []
-    for p in parts:
-        p = ' '.join(p.split()).strip(' .')
-        if p and p.lower() not in seen:
-            seen.add(p.lower())
-            out.append(p)
-    return '; '.join(out)
-
 
 def looks_unstructured(row):
     """A pasted 'Name, Institution, topic' line in the Name column only."""
@@ -339,17 +218,6 @@ def build_people(sheets):
     people.sort(key=lambda p: (p['sort_name'], p['institution']))
     return people, unsorted_rows
 
-
-def site_key(url):
-    """Host and path only, so http/https, www. and a trailing / do not count."""
-    return re.sub(r'^https?://(www\.)?', '',
-                  url.translate(INVISIBLE).strip()).rstrip('/').lower()
-
-
-def same_site(a, b):
-    return site_key(a) == site_key(b)
-
-
 def merge_airtable(people, path):
     """Overlay a tab-separated Airtable export onto the workbook rows.
 
@@ -470,68 +338,61 @@ def build_resources(sheets):
                     'url': url})
     return out
 
-
-def yaml_str(value):
-    return '"%s"' % str(value).replace('\\', '\\\\').replace('"', '\\"')
-
-
-def write_site_data(people, areas, regions, stages, resources, unsorted, issues):
-    os.makedirs(os.path.dirname(SITE_DATA), exist_ok=True)
-    lines = ['# Generated by wrifo/scripts/build_data.py -- do not edit by hand.',
-             'counts:',
-             '  people: %d' % len(people),
-             '  faculty: %d' % sum(1 for p in people if p['roster'] == 'faculty'),
-             '  postdocs: %d' % sum(1 for p in people if p['roster'] == 'postdoc'),
-             '  countries: %d' % len({p['country'] for p in people if p['country']}),
-             '  institutions: %d' % len({p['institution'].lower()
-                                         for p in people if p['institution']}),
-             '  regions: %d' % len({p['region'] for p in people if p['region']}),
-             '  resources: %d' % len(resources),
-             '  unsorted: %d' % len(unsorted),
-             '  issues: %d' % len(issues),
-             'research_areas:']
-    for a in areas:
-        lines.append('  - area: %s' % yaml_str(a['area']))
-        lines.append('    n_people: %d' % a['n_people'])
-    lines.append('regions:')
-    for r in regions:
-        lines.append('  - region: %s' % yaml_str(r['region']))
-        lines.append('    n_people: %d' % r['n_people'])
-    lines.append('career_stages:')
-    for st in stages:
-        lines.append('  - stage: %s' % yaml_str(st['stage']))
-        lines.append('    description: %s' % yaml_str(st['description']))
-        lines.append('    n_people: %d' % st['n_people'])
-    lines.append('resources:')
-    for r in resources:
-        lines.append('  - title: %s' % yaml_str(r['title']))
-        lines.append('    authors: %s' % yaml_str(r['authors']))
-        lines.append('    doi: %s' % yaml_str(r['doi']))
-        lines.append('    url: %s' % yaml_str(r['url']))
-    lines.append('unsorted:')
-    for u in unsorted:
-        lines.append('  - name: %s' % yaml_str(u['name']))
-        lines.append('    institution: %s' % yaml_str(u['institution']))
-        lines.append('    notes: %s' % yaml_str(u['notes']))
-    with open(SITE_DATA, 'w', encoding='utf-8') as fh:
-        fh.write('\n'.join(lines) + '\n')
-    print('  %-22s %4d people summarised'
-          % (os.path.relpath(SITE_DATA, os.path.dirname(ROOT)), len(people)))
+def build_unsorted(sheets, extra):
+    rows = list(extra)
+    for row in sheets['To sort']:
+        if not row or not row[0].strip():
+            continue
+        name, inst, notes = parse_unstructured(row[0])
+        rows.append({'name': name, 'institution': inst, 'notes': notes,
+                     'source': 'To sort'})
+    rows.sort(key=lambda r: sort_key(r['name']))
+    return rows
 
 
-def write(name, fieldnames, rows):
-    path = os.path.join(DATA, name)
-    with open(path, 'w', newline='', encoding='utf-8') as fh:
-        w = csv.DictWriter(fh, fieldnames=fieldnames, extrasaction='ignore')
-        w.writeheader()
-        w.writerows(rows)
-    print('  %-22s %4d rows' % (name, len(rows)))
+def build_resources(sheets):
+    out = []
+    for row in sheets['Published resources'][1:]:
+        row = row + [''] * (4 - len(row))
+        if not row[0].strip():
+            continue
+        link = row[2].strip()
+        m = re.search(r'(10\.\d{4,9}/\S+)', link)
+        doi = m.group(1).rstrip('.') if m else ''
+        url = ('https://doi.org/' + doi) if doi else clean_url(link)
+        out.append({'title': ' '.join(row[0].split()),
+                    'authors': clean_authors(row[1]),
+                    'doi': doi,
+                    'url': url})
+    return out
 
 
-def main(src, airtable=None):
-    z = zipfile.ZipFile(src)
+# --- loading the sheets ------------------------------------------------------
+
+def sheets_from_workbook(path):
+    z = zipfile.ZipFile(path)
     ss, ds = shared_strings(z), date_styles(z)
-    sheets = {name: read_sheet(z, path, ss, ds) for name, path in sheet_map(z)}
+    return {name: read_sheet(z, p, ss, ds) for name, p in sheet_map(z)}
+
+
+def sheets_from_sources():
+    """Read the verbatim per-sheet dumps archived under sources/.
+
+    They are what the workbook held, so the import runs identically from either
+    -- which matters, because the workbook itself is no longer in the tree.
+    """
+    sheets = {}
+    for sheet, filename in SOURCE_FILES.items():
+        path = os.path.join(ROOT, 'sources', filename)
+        if not os.path.exists(path):
+            sys.exit('error: %s is missing; cannot seed from sources/' % path)
+        with open(path, newline='', encoding='utf-8') as fh:
+            sheets[sheet] = [row for row in csv.reader(fh)]
+    return sheets
+
+
+def main(src=None, airtable=None, from_sources=False):
+    sheets = sheets_from_sources() if from_sources else sheets_from_workbook(src)
 
     os.makedirs(DATA, exist_ok=True)
     print('writing %s/' % os.path.relpath(DATA, ROOT))
@@ -539,44 +400,44 @@ def main(src, airtable=None):
     people, stray = build_people(sheets)
     if airtable and os.path.exists(airtable):
         people = merge_airtable(people, airtable)
-    write('people.csv',
-          ['id', 'name', 'sort_name', 'institution', 'country', 'region',
-           'research_area_1', 'research_area_2', 'keywords', 'website',
-           'website_2', 'career_stage', 'roster', 'notes', 'source'], people)
-
-    # Vocabulary tables double as facet counts for the directory page.
-    vocab = [r for r in sheets['Keywords'][1:] if r and r[0].strip()]
-    area_counts = Counter()
-    for p in people:
-        for k in ('research_area_1', 'research_area_2'):
-            if p[k]:
-                area_counts[p[k]] += 1
-    areas = [{'area': a, 'n_people': area_counts[a]}
-             for a in sorted(set([r[0].strip() for r in vocab]) | set(area_counts))]
-    write('research_areas.csv', ['area', 'n_people'], areas)
-
-    region_counts = Counter(p['region'] for p in people if p['region'])
-    regions = [{'region': r, 'n_people': region_counts[r]}
-               for r in REGIONS + sorted(set(region_counts) - set(REGIONS))]
-    write('regions.csv', ['region', 'n_people'], regions)
-
-    stage_counts = Counter(p['career_stage'] for p in people if p['career_stage'])
-    stages = [{'stage': k, 'description': d, 'n_people': stage_counts[k]}
-              for k, d in CAREER_STAGES.items()]
-    write('career_stages.csv', ['stage', 'description', 'n_people'], stages)
+    else:
+        print('  note: no Airtable export given; seeding from the workbook only')
+    print('  %-22s %4d rows' % ('people.csv', W.write_people(people)))
 
     resources = build_resources(sheets)
-    write('resources.csv', ['title', 'authors', 'doi', 'url'], resources)
+    print('  %-22s %4d rows' % ('resources.csv', W.write_table(
+        os.path.join(DATA, 'resources.csv'),
+        ['title', 'authors', 'doi', 'url'], resources)))
 
     unsorted = build_unsorted(sheets, stray)
-    write('unsorted.csv', ['name', 'institution', 'notes', 'source'], unsorted)
+    print('  %-22s %4d rows' % ('unsorted.csv', W.write_table(
+        os.path.join(DATA, 'unsorted.csv'),
+        ['name', 'institution', 'notes', 'source'], unsorted)))
 
-    write('data_issues.csv', ['table', 'id', 'field', 'problem'], issues)
+    print('  %-22s %4d rows' % ('data_issues.csv', W.write_table(
+        os.path.join(DATA, 'data_issues.csv'),
+        ['table', 'id', 'field', 'problem'], issues)))
 
-    write_site_data(people, areas, regions, stages, resources, unsorted, issues)
+    W.refresh_derived(people, resources, unsorted, issues)
+    print('  %-22s %4d people summarised'
+          % (os.path.relpath(W.SITE_DATA, os.path.dirname(ROOT)), len(people)))
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    main(args[0] if args else os.path.join(ROOT, 'WRiFO.xlsx'),
-         args[1] if len(args) > 1 else os.path.join(ROOT, 'airtable_dump.txt'))
+    ap = argparse.ArgumentParser(description=__doc__.split('\n')[0])
+    ap.add_argument('workbook', nargs='?', help='WRiFO.xlsx')
+    ap.add_argument('airtable', nargs='?', help='tab-separated Airtable export')
+    ap.add_argument('--from-sources', action='store_true',
+                    help='read the per-sheet dumps in sources/ instead')
+    ap.add_argument('--yes', action='store_true',
+                    help='skip the confirmation prompt')
+    a = ap.parse_args()
+    if not a.from_sources and not a.workbook:
+        ap.error('give a workbook, or --from-sources')
+    if not a.yes:
+        print(__doc__.split('\n\n')[1].strip() + '\n')
+        if input('Overwrite data/people.csv? [y/N] ').strip().lower() != 'y':
+            sys.exit('aborted')
+    main(a.workbook,
+         a.airtable or os.path.join(ROOT, 'airtable_dump.txt'),
+         a.from_sources)
