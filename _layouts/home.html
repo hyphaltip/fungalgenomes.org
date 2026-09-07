@@ -1,0 +1,27 @@
+---
+layout: default
+---
+<section class="hero">
+  <h1>{{ page.heading | default: site.title }}</h1>
+  <p class="hero__lede">{{ page.lede }}</p>
+  {% include hypha.html %}
+</section>
+
+<div class="prose">{{ content }}</div>
+
+{% assign recent = site.posts | slice: 0, 4 %}
+{% if recent.size > 0 %}
+<section class="recent">
+  <h2>Latest notes</h2>
+  <ul class="postlist">
+    {% for post in recent %}
+    <li>
+      <a href="{{ post.url | relative_url }}">{{ post.title }}</a>
+      <time datetime="{{ post.date | date_to_xmlschema }}">{{ post.date | date: "%-d %B %Y" }}</time>
+      {% if post.summary %}<p>{{ post.summary }}</p>{% endif %}
+    </li>
+    {% endfor %}
+  </ul>
+  <p class="more"><a href="{{ '/notes/' | relative_url }}">All notes</a></p>
+</section>
+{% endif %}

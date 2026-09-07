@@ -1,0 +1,19 @@
+<a class="skip" href="#main">Skip to content</a>
+<header class="masthead">
+  <a class="masthead__mark" href="{{ '/' | relative_url }}">
+    <svg viewBox="0 0 40 24" aria-hidden="true" focusable="false">
+      <path d="M1 12 C10 12 12 12 17 12 C23 12 25 5 33 5" />
+      <path d="M17 12 C23 12 25 19 33 19" />
+      <circle cx="34.5" cy="5" r="2" />
+      <circle cx="34.5" cy="19" r="2" />
+    </svg>
+    <span>{{ site.title }}</span>
+  </a>
+  <nav class="masthead__nav" aria-label="Sections">
+    {% for item in site.nav %}
+      {% assign current = false %}
+      {% if page.url == item.url or page.url contains item.url %}{% assign current = true %}{% endif %}
+      <a href="{{ item.url | relative_url }}"{% if current %} aria-current="page"{% endif %}>{{ item.title }}</a>
+    {% endfor %}
+  </nav>
+</header>

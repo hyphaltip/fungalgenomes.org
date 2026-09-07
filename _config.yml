@@ -1,6 +1,54 @@
-remote_theme: pages-themes/slate@v0.2.0
+title: The Hyphal Tip
+tagline: Fungal genomes, tools, and notes
+description: >-
+  Tools, data, and notes for researchers working on fungal and oomycete genomes.
+url: https://fungalgenomes.org
+baseurl: ""
+lang: en_US
+
+author:
+  name: Jason Stajich
+
+# Section list. Drives the masthead nav and the branching hypha on the home page.
+nav:
+  - title: Tools
+    url: /tools/
+    note: Genome portals, annotation, and prediction parameters
+  - title: Notes
+    url: /notes/
+    note: Posts on fungal genomics and lab practice
+  - title: WRIFO
+    url: /wrifo/
+    note: Women Researchers in Fungi & Oomycetes
+
+permalink: /notes/:year/:month/:title/
+
 plugins:
-- jekyll-remote-theme # add this line to the plugins list if you already have one
-remote_theme: pages-themes/slate@v0.2.0
-title: Fungalgenomes blog and info
-description: Info for fungalgenomics researchers
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+feed:
+  path: /feed.xml
+
+sass:
+  style: compressed
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - README.md
+  - vendor
+  - .bundle
+
+defaults:
+  - scope:
+      path: ""
+      type: posts
+    values:
+      layout: post
+  - scope:
+      path: ""
+      type: pages
+    values:
+      layout: page

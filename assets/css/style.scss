@@ -1,4 +1,429 @@
 ---
 ---
 
-@import "{{ site.theme }}";
+/* fungalgenomes.org — "The Hyphal Tip"
+   Palette drawn from fungal microscopy: lactophenol cotton blue on agar in
+   light mode, calcofluor-white fluorescence on a dark field in dark mode. */
+
+:root {
+  color-scheme: light dark;
+
+  --agar:       #eff2ea;
+  --agar-sunk:  #e6ebdf;
+  --ink:        #16283c;
+  --ink-soft:   #55697c;
+  --cotton:     #1f4e96;
+  --cotton-hi:  #143a75;
+  --rule:       #c9d2c3;
+
+  --page:    62rem;
+  --measure: 36rem;
+
+  --face-text: "Spectral", Georgia, "Times New Roman", serif;
+  --face-ui:   "Archivo", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --agar:      #0c1620;
+    --agar-sunk: #132131;
+    --ink:       #dde8ef;
+    --ink-soft:  #8ca5b6;
+    --cotton:    #79d2e6;
+    --cotton-hi: #a9e6f3;
+    --rule:      #24384a;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--agar);
+  color: var(--ink);
+  font: 400 1.125rem/1.62 var(--face-text);
+  font-variant-numeric: oldstyle-nums;
+  text-rendering: optimizeLegibility;
+}
+
+img { max-width: 100%; height: auto; }
+
+a { color: var(--cotton); text-decoration-thickness: 1px; text-underline-offset: 0.18em; }
+a:hover { color: var(--cotton-hi); }
+
+:focus-visible {
+  outline: 2px solid var(--cotton);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+.skip {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  background: var(--agar);
+  padding: 0.75rem 1rem;
+  font-family: var(--face-ui);
+  z-index: 10;
+}
+.skip:focus { left: 0; }
+
+/* ---------- shared page container ---------- */
+
+.masthead,
+.footer,
+main > .hero,
+main > .prose,
+main > .recent,
+main > .page {
+  width: 100%;
+  max-width: var(--page);
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 5vw, 2.75rem);
+}
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.75rem 2rem;
+  padding-block: 1.75rem 1.25rem;
+  font-family: var(--face-ui);
+}
+
+.masthead__mark {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  font-weight: 600;
+  font-size: 1.0625rem;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  text-decoration: none;
+  margin-right: auto;
+}
+.masthead__mark svg {
+  width: 2.5rem;
+  flex: none;
+  fill: none;
+  stroke: var(--cotton);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+.masthead__mark svg circle { fill: var(--cotton); stroke: none; }
+.masthead__mark:hover { color: var(--cotton); }
+
+.masthead__nav { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+.masthead__nav a {
+  font-size: 0.9375rem;
+  font-weight: 500;
+  color: var(--ink-soft);
+  text-decoration: none;
+  padding-bottom: 0.2rem;
+  border-bottom: 1px solid transparent;
+}
+.masthead__nav a:hover { color: var(--cotton); }
+.masthead__nav a[aria-current="page"] {
+  color: var(--ink);
+  border-bottom-color: var(--cotton);
+}
+
+/* ---------- hero ---------- */
+
+.hero { padding-block: clamp(2.5rem, 7vw, 4.5rem) 1rem; }
+
+.hero h1 {
+  margin: 0;
+  font-size: clamp(2.25rem, 6.5vw, 3.75rem);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.025em;
+}
+
+.hero__lede {
+  margin: 0.9rem 0 0;
+  max-width: 30rem;
+  font-size: clamp(1.125rem, 2.4vw, 1.375rem);
+  line-height: 1.45;
+  color: var(--ink-soft);
+}
+
+/* ---------- the branching hypha ---------- */
+
+.hypha {
+  position: relative;
+  width: 100%;
+  max-width: 47.5rem;
+  aspect-ratio: 760 / 300;
+  margin-top: clamp(1.25rem, 3vw, 2rem);
+}
+
+.hypha__draw {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.hypha__draw path {
+  fill: none;
+  stroke: var(--cotton);
+  stroke-linecap: round;
+}
+.hypha__trunk  { stroke-width: 3.5; }
+.hypha__branch { stroke-width: 2.5; }
+.hypha__fine path { stroke-width: 1.25; opacity: 0.5; }
+.hypha__apex { fill: var(--cotton); }
+
+.hypha__tips {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hypha__tips li {
+  position: absolute;
+  top: var(--top);
+  left: 59%;
+  width: 41%;
+  transform: translateY(-50%);
+  padding-left: 1.1rem;
+}
+.hypha__tips a {
+  display: block;
+  font-family: var(--face-ui);
+  font-size: clamp(1rem, 2.1vw, 1.25rem);
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ink);
+  text-decoration: none;
+}
+.hypha__tips a:hover { color: var(--cotton); text-decoration: underline; }
+.hypha__tips a::after { content: ""; position: absolute; inset: -0.5rem -0.5rem -0.5rem 0; }
+.hypha__tips span {
+  display: block;
+  margin-top: 0.15rem;
+  font-family: var(--face-ui);
+  font-size: clamp(0.8125rem, 1.5vw, 0.9375rem);
+  line-height: 1.4;
+  color: var(--ink-soft);
+}
+
+/* one orchestrated moment: the hyphae extend from the apex on load.
+   Only opacity is animated on the tips, so the animation never fights the
+   translateY(-50%) that centres each label on its branch. */
+@keyframes extend   { to { stroke-dashoffset: 0; } }
+@keyframes bud      { to { opacity: 1; } }
+@keyframes bud-apex { to { opacity: 1; transform: none; } }
+
+.hypha__draw path {
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: extend 0.85s cubic-bezier(0.33, 0.9, 0.5, 1) forwards;
+  animation-delay: calc(var(--i) * 0.16s);
+}
+.hypha__apex,
+.hypha__tips li {
+  opacity: 0;
+  animation: bud 0.5s ease-out forwards;
+  animation-delay: calc(var(--i) * 0.16s + 0.72s);
+}
+.hypha__apex {
+  transform-box: fill-box;
+  transform-origin: center;
+  transform: scale(0.2);
+  animation-name: bud-apex;
+}
+
+/* ---------- prose ---------- */
+
+.prose { padding-block: 1rem; }
+.prose > * { max-width: var(--measure); }
+.prose > :first-child { margin-top: 0; }
+
+.prose h2 {
+  margin: 2.5rem 0 0.6rem;
+  font-size: 1.625rem;
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: -0.018em;
+}
+.prose h3 {
+  margin: 1.9rem 0 0.4rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+.prose p, .prose ul, .prose ol { margin: 0 0 1.15rem; }
+.prose li { margin-bottom: 0.4rem; }
+.prose ul, .prose ol { padding-left: 1.25rem; }
+.prose ul { list-style: none; padding-left: 1.1rem; }
+.prose ul > li { position: relative; }
+.prose ul > li::before {
+  content: "";
+  position: absolute;
+  left: -1.1rem;
+  top: 0.72em;
+  width: 0.6rem;
+  height: 1px;
+  background: var(--cotton);
+}
+
+.prose blockquote {
+  margin: 1.6rem 0;
+  padding-left: 1.1rem;
+  border-left: 2px solid var(--rule);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.prose code {
+  font-size: 0.9em;
+  background: var(--agar-sunk);
+  padding: 0.1em 0.35em;
+  border-radius: 3px;
+}
+.prose pre {
+  max-width: none;
+  overflow-x: auto;
+  background: var(--agar-sunk);
+  padding: 1rem 1.15rem;
+  border-radius: 4px;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+.prose pre code { background: none; padding: 0; }
+
+.prose table { max-width: none; width: 100%; border-collapse: collapse; font-size: 0.9375rem; }
+.prose th, .prose td { text-align: left; padding: 0.5rem 0.75rem 0.5rem 0; border-bottom: 1px solid var(--rule); }
+.prose th { font-family: var(--face-ui); font-weight: 600; }
+
+/* ---------- page & post ---------- */
+
+.page { padding-block: clamp(2rem, 5vw, 3.25rem) 1rem; }
+.page__head { max-width: var(--measure); }
+.page__head h1 {
+  margin: 0;
+  font-size: clamp(1.875rem, 4.5vw, 2.75rem);
+  font-weight: 600;
+  line-height: 1.1;
+  letter-spacing: -0.022em;
+}
+.page__lede {
+  margin: 0.7rem 0 0;
+  font-size: 1.1875rem;
+  color: var(--ink-soft);
+}
+.page__byline {
+  margin: 0.7rem 0 0;
+  font-family: var(--face-ui);
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+.page__byline span { margin-left: 0.6rem; }
+
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem 2rem;
+  justify-content: space-between;
+  max-width: var(--measure);
+  margin-top: 3rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--face-ui);
+  font-size: 0.9375rem;
+}
+.pager__next { margin-left: auto; text-align: right; }
+
+/* ---------- note lists ---------- */
+
+.recent { padding-block: 2rem 1rem; }
+.recent h2 {
+  margin: 0 0 1.25rem;
+  padding-bottom: 0.6rem;
+  border-bottom: 1px solid var(--rule);
+  font-size: 1.0625rem;
+  font-weight: 600;
+  font-family: var(--face-ui);
+  letter-spacing: -0.01em;
+}
+
+.postlist { list-style: none; margin: 0; padding: 0; }
+.postlist li {
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--rule);
+  max-width: 44rem;
+}
+.postlist li:last-child { border-bottom: 0; }
+.postlist a {
+  font-size: 1.25rem;
+  font-weight: 600;
+  letter-spacing: -0.014em;
+  text-decoration: none;
+}
+.postlist a:hover { text-decoration: underline; }
+.postlist time {
+  display: block;
+  margin-top: 0.2rem;
+  font-family: var(--face-ui);
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+.postlist p {
+  margin: 0.45rem 0 0;
+  max-width: var(--measure);
+  color: var(--ink-soft);
+  font-size: 1rem;
+}
+
+.more { margin: 1.5rem 0 0; font-family: var(--face-ui); font-size: 0.9375rem; }
+
+/* ---------- footer ---------- */
+
+.footer {
+  margin-top: clamp(3.5rem, 9vw, 6rem);
+  padding-block: 1.75rem 3rem;
+  border-top: 1px solid var(--rule);
+  font-family: var(--face-ui);
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+.footer__who { margin: 0; max-width: 34rem; line-height: 1.55; }
+.footer__meta { display: flex; flex-wrap: wrap; gap: 1.5rem; margin: 1rem 0 0; }
+
+/* ---------- narrow screens ---------- */
+
+@media (max-width: 44rem) {
+  .hypha { aspect-ratio: auto; max-width: none; }
+  .hypha__draw { display: none; }
+  .hypha__tips { position: static; }
+  .hypha__tips li {
+    position: static;
+    width: auto;
+    transform: none;
+    padding: 0.85rem 0 0.85rem 1.1rem;
+    border-top: 1px solid var(--rule);
+  }
+  .hypha__tips li::before {
+    content: "";
+    position: absolute;
+    margin: 0.65em 0 0 -1.1rem;
+    width: 0.6rem;
+    height: 1px;
+    background: var(--cotton);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hypha__draw path { stroke-dashoffset: 0; }
+  .hypha__draw path,
+  .hypha__apex,
+  .hypha__tips li { animation: none; opacity: 1; }
+  .hypha__apex { transform: none; }
+  * { transition-duration: 0.01ms !important; }
+}
