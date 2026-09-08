@@ -4,10 +4,7 @@ lede: Women Researchers in Fungi & Oomycetes — an open directory of the people
 permalink: /wrifo/
 ---
 
-WRIFO is a community-maintained list of women running research programmes on
-fungi and oomycetes. It exists so that nobody organising a symposium, assembling
-a review panel, or looking for a collaborator can claim they could not find
-anyone.
+WRIFO is a community-maintained list of women running research programmes on fungi and oomycetes. It exists to help anyone organising a symposium, assembling a review panel, or looking for a collaborator to find women candidates.
 
 <dl class="stats">
   <div><dt>People listed</dt><dd>{{ site.data.wrifo.counts.people }}</dd></div>
@@ -65,9 +62,4 @@ site it can move to a repository of its own without any of them changing shape.
 
 ## Credit
 
-The list began as a shared spreadsheet in 2018, later copied into an Airtable
-base, and grew through hundreds of contributions from the mycology community.
-The two copies drifted; what you see here is their union, with the
-disagreements listed rather than quietly resolved. It is maintained by
-{{ site.author.name }}; the work of assembling it belongs to everyone who added
-a row.
+The list began as a shared spreadsheet in 2018 and grew through contributions from the mycology community.
